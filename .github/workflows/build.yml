@@ -5,8 +5,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip -o siraj-arts-printing-hub.zip
-      - run: cp -r siraj-arts-printing-hub/*. || cp -r */*. || true
+      - name: Setup
+        run: |
+          unzip -o siraj-arts-printing-hub.zip
+          ls -la
+          if [ -d "siraj-arts-printing-hub" ]; then
+            cp -r siraj-arts-printing-hub/*.
+          fi
+          PROJECT=$(find. -maxdepth 3 -name "package.json" | head -1 | xargs dirname)
+          echo "PROJECT=$PROJECT"
+          if [ "$PROJECT"!= "." ] && [ "$PROJECT"!= "" ]; then
+            cp -r $PROJECT/*.
+            cp -r $PROJECT/.*. 2>/dev/null || true
+          fi
+          ls -la
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -17,8 +29,8 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm i @capacitor/cli @capacitor/core @capacitor/android
-      - run: npx cap init "Siraj Arts" com.sirajarts.app --web-dir=dist || true
-      - run: npx cap add android
+      - run: npx cap init "Siraj Arts" com.sirajarts.app --web-dir=dist --npm-client npm || true
+      - run: npx cap add android || true
       - run: npx cap copy android
       - run: cd android && chmod +x gradlew &&./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
