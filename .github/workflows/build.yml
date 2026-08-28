@@ -8,10 +8,13 @@ jobs:
       - name: Extract ZIP
         run: |
           unzip -o siraj-arts-printing-hub.zip
-          # ZIP ke andar ka folder bahar lao
-          mv */*./ 2>/dev/null || true
-          mv */*/*./ 2>/dev/null || true
-          ls
+          DIR=$(find. -name "package.json" -type f | head -1 | xargs dirname)
+          echo "Found $DIR"
+          if [ "$DIR"!= "." ] && [ "$DIR"!= "" ]; then
+            shopt -s dotglob
+            mv $DIR/*./
+          fi
+          ls -la
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -21,9 +24,8 @@ jobs:
           distribution: temurin
       - run: npm install
       - run: npm run build
-      - run: npm install @capacitor/cli @capacitor/core @capacitor/android
-      - run: npx cap init "Siraj Arts" com.sirajarts.app --web-dir=dist
-      - run: npx cap add android
+      - run: npx cap init "Siraj Arts" com.sirajarts.app --web-dir=dist --npm-client npm || true
+      - run: npx cap add android || true
       - run: npx cap copy android
       - run: cd android && chmod +x gradlew &&./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
